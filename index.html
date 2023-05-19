@@ -219,7 +219,7 @@ int main(void) {
     <h3>char</h3>
       Chars are like integers but ALWAYS 1 byte long. This is always true, no matter the target architecture or compiler. Most useful characters used in the English language are encoded in what's called an ASCII table and can fit inside one byte of representation. This makes chars useful to represent development level strings.
 
-    <h3>basic strings (char*)</h3>
+    <h3>Basic strings (char*)</h3>
       If you define a constant string in code using quotes, e.g.: "hello, world!" it's actually a static char array being defined and stored in your binary. I recommend reading a bit about pointers and arrays down below, but basic strings are stored in a char* chunk where the end of the string is a null byte.
 
       <code class="multiline">char* content = "Hello, world!";
@@ -266,6 +266,132 @@ int main() {
 int combineAB(struct Foo foo) {
   return foo.a + foo.b;
 }</code>
+      <h3>Function pointers</h3>
+      <p>Functions in C are first class citizens, but there is no sense of closures. You cannot define anonymous functions capturing state. But any defined function may be sent around or stored.</p>
+      <p>The syntax to store them are <code>void (*&lt;symbol name here&gt;)(int parameter);</code></p>
+
+      <code class="multiline">#include &lt;stdio.h&gt;
+
+int add(int a, int b) {
+  return a + b;
+}
+
+int multiply(int a, int b) {
+  return a * b;
+}
+
+// unused, just to show an example of a struct with a callback
+struct Data {
+  void (*callback)(void* payload);
+};
+
+int main(void) {
+  int (*callback)(int, int) = add;
+
+  printf("Adding numbers: %d\n", callback(5, 5));
+
+  callback = multiply;
+  printf("Multiplying numbers: %d\n", callback(5, 5));
+
+  return 0;
+}</code>
+
+    <h2>Inline construction of data types</h2>
+    <p>It's possible to initialize structs and arrays with data when you define them.</p>
+
+    <code class="multiline">#include &lt;stdio.h&gt;
+
+struct Foo {
+  int a;
+  int b;
+};
+
+int main(void) {
+  // Named initialization, some compilers demand that these are
+  // in order.
+  struct Foo foo = {
+    .a = 1,
+    .b = 2
+  };
+  
+  struct Foo another_foo = {3, 4};
+
+  int array_of_ints[] = {1, 2, 3, 4, 5};
+
+  // We've defined a size bigger than the initialization,
+  // the remaining bytes will become zero.
+  int another_array_of_ints[6] = {1, 2, 3, 4, 5};
+
+  printf("foo: %d, %d\n", foo.a, foo.b);
+  printf("another_foo: %d, %d\n", another_foo.a, another_foo.b);
+
+  printf("number of elements in static array: %ld\n",
+         sizeof(array_of_ints) / sizeof(int));
+
+  printf("number of elements in static array: %ld\n",
+         sizeof(another_array_of_ints) / sizeof(int));
+
+  printf("last element of another_array_of_ints: %d\n", another_array_of_ints[5]);
+
+  return 0;
+}</code>
+
+    <h2>Defining custom type aliases (typedef)</h2>
+    <p>When you define a struct it'll always have to be preceded by the statement 'struct' when used. You can use a statement called typedef to give aliases to types, structs being one of the common uses of typedefs.</p>
+    <code class="multiline">typedef struct {
+  int a;
+  int b;
+} Foo;
+
+typedef struct {
+  int a;
+  int b;
+} Bar;
+
+Bar convertFooToBar(Foo foo) {
+  return {
+    .a = foo.a,
+    .b = foo.b
+  };
+}</code>
+
+    <p>Looking at the typedefs given above, we give anonymous structs to the typedef statements and gives them the names of Foo and Bar.</p>
+
+    <p>This can also be used for function pointer constraints as well, sky's the limit</p>
+
+    <code class="multiline">#include &lt;stdio.h&gt;
+
+typedef struct {
+  char* message;
+} Event;
+
+typedef (void (*Listener)(void* event));
+
+void emit(Listener listener) {
+  listener(NULL);
+}
+
+void emit_event(Listener listener, Event* event) {
+  listener(event);
+}
+
+void audit_log(void* _payload) {
+  if (!_payload) {
+    printf("Message was emitted without payload\n");
+    return;
+  }
+
+  Event* payload = (Event*) _payload;
+  printf("Message was emitted: %s\n", payload->message);
+}
+
+int main() {
+  emit(audit_log);
+
+  Event event = {.message = "[event payload]"};
+  emit_event(audit_log, &amp;event);
+}</code>
+
 
     <h2>Casting</h2>
     <p>If you're used to other typed languages, let's say Typescript, you've most likely casted a type into something else. In Typescript it will not let you cast types into something it cannot implement. But in C, casting isn't just a hint to the compiler that you want this type to be treated as something else, in some cases it'll actually emit type conversion when compiling. The most obvious one is getting information between ints and floats. They are NOT the same, but if you cast between these types the compiler knows what you want and will solve it for you.</p>
@@ -479,7 +605,6 @@ int main(void) {
       <div><a href="https://en.cppreference.com/">Good documentation for standard libraries, both C/C++</a></div>
       <div><a href="https://gcc.gnu.org/onlinedocs/cpp/">Macro documentation</a></p></div>
 
-
   <h2>simple 'Hello, world!' example.c</h2>
   <code class="multiline">#include &lt;stdio.h&gt;
 
@@ -530,16 +655,7 @@ int main(void) {
 
       anchor.appendChild(content);
       indexElement.appendChild(anchor);
-      // container.appendChild(anchor);
     }
-
-    /*
-    const anchors = Array.from(document.getElementsByClassName("subject"));
-
-
-    anchors.forEach(anchor => {
-      indexElement.appendChild(buildAnchor(anchor));
-    });*/
   }
 
   setup();
