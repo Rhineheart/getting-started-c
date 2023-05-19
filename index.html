@@ -1,0 +1,482 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@300&family=Roboto:wght@300&display=swap" rel="stylesheet">
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  code {
+    font-family: 'Inconsolata', monospace;
+
+    display: inline-block;
+    color: #209040;
+
+    border: 1px solid #dadada;
+    background-color: #fafafa;
+    padding: 4px 8px;
+    border-radius: 2px;
+    margin: 12px 0px;
+  }
+
+  a:link, a:visited, a:hover, a:active {
+    text-decoration: none;
+    color: #2070AE;
+  }
+
+  a:hover {
+    background-color: #2070AE10;
+  }
+
+  .block {
+    display: block;
+  }
+
+  .multiline {
+    display: block;
+    white-space: pre-wrap;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  #content {
+    margin-top: 40px;
+    width: 800px;
+    background-color: #fff;
+    padding: 20px 60px;
+    border-radius: 4px;
+
+    box-shadow: 0px 0px 29px 0px rgba(48,45,72,0.15);
+    -webkit-box-shadow: 0px 0px 29px 0px rgba(48,45,72,0.15);
+    -moz-box-shadow: 0px 0px 29px 0px rgba(48,45,72,0.15);
+  }
+
+  .anchor {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  h1,h2,h3,h4 {
+    color: #506090;
+  }
+
+</style>
+</head>
+<body>
+
+<div id="content">
+  <h1>Notes</h1>
+    This document is written for someone who's a bit experienced in devving overall but has never touched C. I'll expect you to know how to navigate a terminal. A lot of these subjects are reduced to the basics just to let you know they exist so it'll be easier to find in depth material about them.
+
+  <h1>Index</h1>
+
+  <div id="index"></div>
+
+  <h1>Installing</h1>
+    <h2>Compilers</h2>
+      <h3>MacOS</h3>
+        MacOS comes preinstalled with Apple's own version of clang. You can use this out of the box.
+        If you want gcc you can get it with <a href="https://brew.sh">homebrew</a>.
+        <code>brew install gcc</code>
+
+      <h3>Archlinux / Linux</h3>
+        <p>Getting clang: <code>pacman -S clang</code></p>
+
+        <p>If you want only gcc you can install it directly: <code>pacman -S gcc</code></p>
+
+        <p>But I recommend getting the entire base development package: <code>pacman -S base-devel</code></p>
+
+        <p>If you're on linux to begin with I'm certain you're familiar with your package manager. Find a package of clang/gcc.</p>
+
+      <h3>Windows</h3>
+        Sorry winnie bois.
+
+  <h1>Building</h1>
+    <h2>Using the driver</h2>
+      <p>
+      To start we'll need a compiler. MacOS comes with a pre-installed version of Apple's own clang. I'll be using this for the examples. Most options are mirrored in gcc by either sharing the exact same way to invocate it or it having a slightly different name.
+      </p>
+
+      <p>
+      Clang isn't actually a compiler, it's what's called a driver. It does both compiling and linking for you. Compiler is just the common name for these tools. When you compile a file it'll reduce your file into what is essentially the requirements of the content. It's output is called an object file. It'll contain e.g. what local variables there are, all the function payloads etc. etc.. It isn't anything by itself. Here is where the linker comes in. A linker takes a bunch of these object files and links them together to build a binary. It'll take decisions in how to stitch everything together with regards to all the requirements that are put in place by the object files.
+      </p>
+
+    <code class="multiline"># let's play with the thought that we have a program at src/main.c
+# (there's a hello world example to access from the index if you want to try to build it)
+
+# this would compile and link our src/main.c file into a binary bin/main.
+# -o is your output target, and all rest arguments are expected to be input files
+clang -std=c99 -o bin/main src/main.c
+
+# let's say we instead wanted to cache the compilation because compiling and linking 
+# are two different steps.
+# -c tells the driver to only compile and not link
+clang -std=c99 -o obj/main.o -c src/main.c
+
+# and then we can link a binary with our object files
+clang -std=c99 -o bin/main obj/main.o
+
+# this would obviously be more useful if we had more than one input file.</code>
+
+    <h2>Compiling and linking multiple files</h2>
+      <p>The above call to build a binary scales linearly, just continue to add object files as input to include them all while linking.</p>
+      <p>If you want to define an API in one file and use it in another you have to define what are called header files. Header files allows the compiler to build against what are essentially promises of business logic. A header file will define only the available symbols and their constraints, it's up to you when you link to supply all the necessary compiled object files to fulfill all the expected symbols.</p>
+      <p>An example will most likely make it a lot more clear:</p>
+
+      <code class="multiline">// file: src/int_helpers.h
+
+// these macro directives are to protect the header file from being included
+// several times causing duplicates, if you're coding c++ you can replace this
+// with #pragma once
+#ifndef _INT_HELPERS_H_
+#define _INT_HELPERS_H_
+
+int addInts(int, int);
+
+#endif</code>
+
+      <code class="multiline">// file: src/int_helpers.c
+
+#include "int_helpers.h"
+
+// if you ever want to hide symbols from the global namespace
+// you can define static symbols
+
+static int _hidden_int_adder(int a, int b) {
+  return a + b;
+}
+
+int addInts(int a, int b) {
+  return _hidden_int_adder(a, b);
+}</code>
+
+      <code class="multiline">// file: src/main.c
+
+#include &lt;stdio.h&gt;
+
+// even though there's no actual code in int_helpers.h we can still
+// use the declared functions cause we promise to supply them when we
+// link
+#include "int_helpers.h"
+
+int main(void) {
+  int my_favourite_int = addInts(10, 5);
+  printf("Gosh that's one good int: %d\n", my_favourite_int);
+
+  return 0;
+}</code>
+
+      <p>Let's combine these into a binary</p>
+      <code class="multiline">clang -std=c99 -o bin/main src/main.c src/int_helpers.c</code>
+
+  <h1>Language features</h1>
+  <h2>Data types</h2>
+    <h3>int</h3>
+      int - Integer, stores an integer, e.g. 28131582 or -489156
+
+      The last bit in an integer is used to tell if it's at the moment storing a positive or a negative number.
+
+      When it comes to integers (int) they can be quite cursed. The compiler and target architecture itself will decide how big an int is. A rule of thumb is that 32bit output will have a 4 byte integer, and a 64bit output will have an 8 byte integer. But this is still always just an assumption. To remove this assumption you can include a standard lib called <a href="https://en.cppreference.com/w/c/types/integer">#include "stdint.h"</a> which gives you access to fixed size integers, e.g. int32_t will be a 4 byte int, int16_t will be a 2 byte int etc. etc.
+
+    <h3>unsigned int</h3>
+      Unsigned integers are integers that cannot be negative. The same quirks mentioned for ints apply to these as well. Since they cannot be negative, they get access to the last bit that would signal if it was negative or not, actively doubling the size of numbers it can store.
+
+    <h3>char</h3>
+      Chars are like integers but ALWAYS 1 byte long. This is always true, no matter the target architecture or compiler. Most useful characters used in the English language are encoded in what's called an ASCII table and can fit inside one byte of representation. This makes chars useful to represent development level strings.
+
+    <h3>bool</h3>
+      This is a type that was added in the C99 standard, it's more or less just an integer saying 0 or 1. If you want to use it you must include &lt;stdbool.h&gt;
+
+    <h3>float</h3>
+      Floats are numbers that can store decimals. They come in different sizes, like float being 4 byte and double being 8 byte.
+
+    <h3>enums</h3>
+      <p>
+        Enums are global identifiers. They do not come with its own namespace.
+      </p>
+
+      <code class="multiline">enum Kind {
+  UNKNOWN = 0,
+  A,
+  B,
+  C
+};
+
+int main() {
+  // foo will receive the number 1 from expanding enum A from Kind.
+  int foo = A;
+
+  return 0;
+}</code>
+
+    <h3>structs</h3>
+      <p>
+        Structs are hints for the compiler on how to store a sequence of data. How they map into memory is outside of the scope of this document.
+      </p>
+
+      <code class="multiline">struct Foo {
+  int a;
+  int b;
+};
+
+int combineAB(struct Foo foo) {
+  return foo.a + foo.b;
+}</code>
+
+    <h2>Casting</h2>
+    <p>If you're used to other typed languages, let's say Typescript, you've most likely casted a type into something else. In Typescript it will not let you cast types into something it cannot implement. But in C, casting isn't just a hint to the compiler that you want this type to be treated as something else, in some cases it'll actually emit type conversion when compiling. The most obvious one is getting information between ints and floats. They are NOT the same, but if you cast between these types the compiler knows what you want and will solve it for you.</p>
+    <code class="multiline">int int_value = 10;
+
+// It will make sure that the number 10 will end up in the float
+float float_value = (float) int_value; </code>
+
+    <p>In C, when dealing with pointers, you are the arbiter. If you have a pointer, you may cast it to whatever type you want and treat it in any way you want. The compiler will just give you a thumbs up and trust in what you're doing.</p>
+
+    <p>The below example might need you to read about pointers a bit first.</p>
+    <code class="multiline">// We're casting the reference of int_value to a float* and then 
+// dereferencing it as if it were a float. This will NOT make sure that 10 ends up in 
+// float_converted_from_ptr, it'll copy the data behind &amp;int_value as if it WERE
+// a float to begin with.
+float float_converted_from_ptr = *((float*) &amp;int_value);</code>
+
+
+  <h2>Control flow</h2>
+    <h3>If statement</h3>
+      <p>
+        Classic if statements you know and love. They are not expressions.
+      </p>
+
+      <code class="multiline">int x = 10;
+
+if (x > 15) {
+  printf("X is more than 15\n");
+} else if (x > 10) {
+  printf("X is more than 10\n");
+} else {
+  printf("X is being itself\n");
+}</code>
+    <h3>Ternaries</h3>
+      <p>
+        Classic ternaries you know and love. They are expressions. I have no idea if this was introduced in C99.
+      </p>
+
+      <code class="multiline">int x = 10;
+char* content = x > 15 ? "more than 15\n" : "being itself.\n";
+printf("X is %s\n", content);</code>
+
+    <h3>While statement</h3>
+      <code class="multiline">int x = 10;
+
+while(x > 0) {
+  printf("X is rapidly decreasing: %d\n", x--);
+}</code>
+
+    <h3>For statement</h3>
+      <code class="multiline">for(int x = 0; x > 0; x--) {
+  printf("X is rapidly decreasing: %d\n", x);
+}</code>
+
+    <h3>Do-while statement</h3>
+      <code class="multiline">int x = 10;
+do {
+  printf("X is rapidly decreasing: %d\n", x--);
+} while(x > 0);</code>
+
+    <h3>switch statement</h3>
+      <p>
+        Switch statements can only handle primitives.
+      </p>
+
+      <code class="multiline">enum Kind {
+  UNKNOWN = 0,
+  A,
+  B
+};
+
+int is_of_kind(int input) {
+  switch(input) {
+    case A:
+    case B:
+      return 1;
+
+    case UNKNOWN:
+    default:
+      return 0;
+  }
+}</code>
+
+  <h1>Memory</h1>
+    Memory is nothing more than a chunk of data, all open for interpretation. There's no difference in the storage of 10 ints or 10 chars except the size required. In C you can handle any memory in any way that you might want. All the types we use to handle memory are essentially just a way to tell the compiler what size we expect the data to be when we want to access it.
+
+  <h2>Call stack</h2>
+    In essence all functions require some space in memory to move around, e.g. to store local variables and parameters. This is stored in what's called a stack frame. Every function call creates one of these stack frames on top of all other existing stack frames. Whenever a function returns, it'll remove the stack frame it created. Since the only function that could ever return is the latest called one, this strategy will function like a stack. Hence the name.
+
+  <h2>Heap memory</h2>
+  Heap memory is the wild west. This part of memory is requested during runtime and is used for any situation that calls for dynamic memory. See <a href="#memory-lifecycle">Memory lifecycle</a>
+
+  <h2>Static memory</h2>
+    Any values that are defined outside of functions will get static space designated to it. This memory will live outside of both the call stack and the heap in something called a data segment. The program reserves this part of memory on startup cause it knows exactly how much it requires due to the information being available while compiling.
+
+  <h2>Pointers</h2>
+  Pointers are the previously mentioned types with regards to working with memory. In raw data a pointer is just a number, an address to a point in memory. Other than being an address to memory, they come with an actual type, i.e. int32_t*, which specifies the expected size of the stored value (see <a href="#arrays-(and-pointer-arithmetic)">Arrays</a> for more information). If the type is irrelevant to the pointer, you may store it in a void*.
+
+    <h3>Pointer what?</h3>
+    <p>
+      Let's start with an example of how to work with them:
+    </p>
+
+      <code class="multiline">// We have a pointer of type int32_t called ptr, pointing to address 0
+int32_t* ptr = 0;
+
+// If we want to try to access the data by dereferencing it we should run:
+int32_t copiedData = *ptr;
+
+// This would translate to going to ptr and fetching int32_t (because of the pointer type)
+// amount of data storing it in copiedData. Any modification to copiedData will not mutate
+// whatever is stored at ptr.
+
+// If we want to modify the content, we can dereference the pointer on the
+// assignment side, like this:
+*ptr = 1000;</code>
+
+    <p>
+      The above code will break if you try to run it cause we don't actually have access to address 0, which is essentially a NULL pointer.
+    </p>
+
+  <h2>Arrays (and pointer arithmetic)</h2>
+  <p>
+    Arrays are essentially just syntactic sugar to handle something called pointer arithmetic. Whenever you have a pointer with a type that isn't void*, you're telling the compiler what size you expect when you work with this pointer. If you dereference the pointer, it'll copy the type's size of data. If you take the pointer and add 1 to it, it will not increase the address by 1 byte, but it will increase the address by the amount of bytes in the type's size. Arrays help you in both moving in memory by the expected size per element in the array, and by helping you dereference the data in the same breath.
+  </p>
+
+    <code class="multiline">// Let's imagine this array is at address 0. It got the chunk size of 8 ints.
+int array_of_ints[8]; 
+
+// This would set the number 10 to the position of the
+// array_of_ints address + the size of the type * the given index
+// which would become: 0 + sizeof(int) * 3
+array_of_ints[3] = 10; 
+
+printf("Stored at arrays_of_ints[3]: %d\n", array_of_ints[3]); // 10
+
+// Which means, we could accomplish the same thing doing:
+int* chunk = array_of_ints + 3;
+*chunk = 15;
+
+printf("Stored at arrays_of_ints[3]: %d\n", array_of_ints[3]); // 15</code>
+
+      <p>To the compiler, anything deemed an array is just a pointer. When you define arrays, it's usually to set a static size to allow it to live in the stack frame or in the data segment. This skips using malloc() during runtime to allocate memory cause the compiler knows by compile time how much space you require.</p>
+
+  <h2>Memory lifecycle</h2>
+  <p>If we ever require dynamic memory management, we'll have to request a chunk of the heap through some allocator. The rawest allocator is malloc(), available in stdlib.h. We give malloc() a size in bytes of how big we want the chunk to be and we'll get a pointer to that chunk in return. When we're done with this chunk it's up to us to call free() and say we're done, letting the allocator know it's up for grabs again. If we never call free() on anything we request we'll end up with memory leaks.</p>
+  <code class="multiline">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt; // malloc, free
+
+#define SIZE 12
+int main(void) {
+  // Request a chunk of heap memory with the size of SIZE (12) ints.
+  int* chunk = (int*) malloc(sizeof(int) * SIZE); 
+
+  // Since we treat the pointer as an int type and we've aligned the size of the chunk
+  // with the size of ints, we can modify the chunk as if it were an array of 12 ints
+  for(int i = 0; i < SIZE; i++) {
+    chunk[i] = i * i;
+  }
+
+  for(int i = 0; i < SIZE; i++) {
+    printf("We've stored '%d' at index %d.\n", chunk[i], i);
+  }
+
+  free(chunk); // We're done with the chunk, let's give it back to not leak this memory.
+
+  return 0;
+}</code>
+
+  
+
+  <h1>Resources</h1>
+    <h2>Documentation</h2>
+      <a href="https://en.cppreference.com/">Good documentation for standard libraries, both C/C++</a>
+
+
+  <h2>simple 'Hello, world!' example.c</h2>
+  <code class="multiline">#include &lt;stdio.h&gt;
+
+// The linker will look for the 'int main' function to run as an entrypoint of your program.
+int main(void) {
+  printf("Hello, world!\n");
+
+  // The number being returned is the exit code for your program, 0 is ALWAYS defined as success.
+  // As in it ran as expected. Any integer deviating from 0 is an error and the code is defined by you.
+  return 0;
+}
+
+</div>
+
+<script>
+  let id = 0;
+  function getId() {
+    return (id++).toString();
+  }
+
+  function setup() {
+    const indexElement = document.getElementById("index");
+    const root = document.getElementById("content");
+
+    const headers = new Set(["H1", "H2", "H3"]);
+    const padding = {
+      "H1": 0,
+      "H2": 20,
+      "H3": 40,
+    }
+    
+    for(let i = 0; i < root.children.length; i++) {
+      const child = root.children[i];
+      if (!headers.has(child.tagName)) continue;
+
+      const anchor = document.createElement("div")
+      const content = document.createElement("a");
+
+      anchor.className = "anchor";
+      content.innerText = child.innerText;
+
+      const id = child.innerText.toLowerCase().replace(/\s/gi, "-");
+
+      child.id = id;
+      content.href = "#" + id;
+
+      anchor.style = `margin-left: ${padding[child.tagName] || 0}px;`; 
+
+      anchor.appendChild(content);
+      indexElement.appendChild(anchor);
+      // container.appendChild(anchor);
+    }
+
+    /*
+    const anchors = Array.from(document.getElementsByClassName("subject"));
+
+
+    anchors.forEach(anchor => {
+      indexElement.appendChild(buildAnchor(anchor));
+    });*/
+  }
+
+  setup();
+
+</script>
+
+</body>
+</html>
