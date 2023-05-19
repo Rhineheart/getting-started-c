@@ -371,6 +371,26 @@ int32_t copiedData = *ptr;
       The above code will break if you try to run it cause we don't actually have access to address 0, which is essentially a NULL pointer.
     </p>
 
+    <h3>References</h3>
+    <p>If you have defined an integer in your current stack frame and you want another function to modify its state, you can't give the int straight up to that function because would copy the value. If you had this int allocated on the heap, you could send the pointer to the function which it could use to fetch and modify the int. References are essentially reversing the address of where a value is stored giving you the pointer to that value.</p>
+    <code class="multiline">#include &lt;stdio.h&gt;
+
+void doubleInt(int* value) {
+  *value = *value * 2;
+}
+
+int main(void) {
+  int value = 10;
+  printf("We got a decent value: %d\n", value);
+
+  // The &amp; in front of our symbol 'value' will dereference its memory location.
+  doubleInt(&amp;value);
+
+  printf("We got a doubled value: %d\n", value);
+
+  return 0;
+}</code>
+
   <h2>Arrays (and pointer arithmetic)</h2>
   <p>
     Arrays are essentially just syntactic sugar to handle something called pointer arithmetic. Whenever you have a pointer with a type that isn't void*, you're telling the compiler what size you expect when you work with this pointer. If you dereference the pointer, it'll copy the type's size of data. If you take the pointer and add 1 to it, it will not increase the address by 1 byte, but it will increase the address by the amount of bytes in the type's size. Arrays help you in both moving in memory by the expected size per element in the array, and by helping you dereference the data in the same breath.
