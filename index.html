@@ -203,7 +203,7 @@ int main(void) {
 
       The last bit in an integer is used to tell if it's at the moment storing a positive or a negative number.
 
-      When it comes to integers (int) they can be quite cursed. The compiler and target architecture itself will decide how big an int is. A rule of thumb is that 32bit output will have a 4 byte integer, and a 64bit output will have an 8 byte integer. But this is still always just an assumption. To remove this assumption you can include a standard lib called <a href="https://en.cppreference.com/w/c/types/integer">#include "stdint.h"</a> which gives you access to fixed size integers, e.g. int32_t will be a 4 byte int, int16_t will be a 2 byte int etc. etc.
+      When it comes to integers (int) they can be quite cursed. The compiler and target architecture itself will decide how big an int is. A rule of thumb is that 32bit output will have a 4 byte integer, and a 64bit output will have an 8 byte integer. But this is still always just an assumption. To remove this assumption you can include a standard lib called <a href="https://en.cppreference.com/w/c/types/integer">#include &lt;stdint.h&gt;</a> which gives you access to fixed size integers, e.g. int32_t will be a 4 byte int, int16_t will be a 2 byte int etc. etc.
 
     <h3>unsigned int</h3>
       Unsigned integers are integers that cannot be negative. The same quirks mentioned for ints apply to these as well. Since they cannot be negative, they get access to the last bit that would signal if it was negative or not, actively doubling the size of numbers it can store.
