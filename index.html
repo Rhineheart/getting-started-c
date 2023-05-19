@@ -136,6 +136,7 @@ clang -std=c99 -o bin/main obj/main.o
     <h2>Compiling and linking multiple files</h2>
       <p>The above call to build a binary scales linearly, just continue to add object files as input to include them all while linking.</p>
       <p>If you want to define an API in one file and use it in another you have to define what are called header files. Header files allows the compiler to build against what are essentially promises of business logic. A header file will define only the available symbols and their constraints, it's up to you when you link to supply all the necessary compiled object files to fulfill all the expected symbols.</p>
+      <p>We'll need to use a directive to include header files: <code>#include "./relative_file_path.h"</code></p>
       <p>An example will most likely make it a lot more clear:</p>
 
       <code class="multiline">// file: src/int_helpers.h
@@ -183,6 +184,17 @@ int main(void) {
 
       <p>Let's combine these into a binary</p>
       <code class="multiline">clang -std=c99 -o bin/main src/main.c src/int_helpers.c</code>
+
+   <h2>Using libraries (#include)</h2>
+      <p>
+      To include libraries, we'll have to use the <code>#include</code> directive. This one takes two different looking inputs: <code>#include &lt;stdio.h&gt;</code> and <code>#include "./relative_file_path.h"</code>. When using quotes, you're telling the compiler to dig relatively to the file it is compiling. When using the 'less than/greater than' version it'll use supplied directories given to the compiler when you compile.
+      </p>
+      <p> E.g. <code>clang -isystem "./third-party/include" -o bin/main src/main</code> would allow the <code>#include &lt;custom-lib.h&gt;</code> to find the custom-lib.h header file under "./third-party/include" of wherever you're calling the compiler.
+      </p>
+      <p>A lot of libraries come with pre-built payloads, you'll have to link against these when you link your binary. Just including their header isn't enough. Third party libraries deliver their payloads in a lot of different ways, I suggest you to always read their documentation. But in general, to link against a pre-built payload you'll have to add their directory to your search path with: <code>-L[complete path to directory]</code> and then link against the content of that directory with <code>-l[lib name]</code>.</p>
+      <p>
+      As an example, I'll link against lua which I have installed with homebrew by supplying where to find the lib: <code>-L/opt/homebrew/Cellar/lua/5.4.5/lib</code> and what library I want in that directory: <code>-llua</code>. The file I am linking against in my example directory is named 'liblua', notice how the compiles makes some assumptions as to what prefixes/suffixes the library file may have. You can of course supply the full name.</p>
+      <p>The entire example would look like: <code>clang -L/opt/homebrew/Cellar/lua/5.4.5/lib -llua -o bin/main src/main.c</code></p>
 
   <h1>Language features</h1>
   <h2>Data types</h2>
@@ -320,6 +332,7 @@ int is_of_kind(int input) {
   }
 }</code>
 
+
   <h1>Memory</h1>
     Memory is nothing more than a chunk of data, all open for interpretation. There's no difference in the storage of 10 ints or 10 chars except the size required. In C you can handle any memory in any way that you might want. All the types we use to handle memory are essentially just a way to tell the compiler what size we expect the data to be when we want to access it.
 
@@ -423,7 +436,7 @@ int main(void) {
   // The number being returned is the exit code for your program, 0 is ALWAYS defined as success.
   // As in it ran as expected. Any integer deviating from 0 is an error and the code is defined by you.
   return 0;
-}
+}</code>
 
 </div>
 
