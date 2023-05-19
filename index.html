@@ -309,7 +309,7 @@ do {
   printf("X is rapidly decreasing: %d\n", x--);
 } while(x > 0);</code>
 
-    <h3>switch statement</h3>
+    <h3>Switch statement</h3>
       <p>
         Switch statements can only handle primitives.
       </p>
@@ -331,6 +331,22 @@ int is_of_kind(int input) {
       return 0;
   }
 }</code>
+      <h2>Macros (the preprocessor)</h2>
+      <p>You can define and execute code that generates some kind of output during compile-time. These are called macros and often start with #. They're useful for a lot of things, e.g. separating business logic depending on what OS you're building for (cause they might have a difference in standard libs), pre-calculating data structures to save the binary from doing it while it is running, etc.. There are a lot of different macro features to help you. A lot of these features are available in all compilers, but some are compiler specific.</p>
+
+  <p>An example of separating logic depending on target OS:</p>
+      <code class="multiline">void save_file(char* path, void* content, int size) {
+  #if defined(_WIN32)
+    // Use windows specific file system API
+  #elif defined(__APPLE__)
+    // Use MacOS specific file system API
+  #else
+    // Don't save the file, we don't support the current target.
+    printf("Failed to save file: %s\n", path);
+  #endif
+}</code>
+
+    <p>Here's the documentation for gcc macros, most of these are available in clang too: <a href="https://gcc.gnu.org/onlinedocs/cpp/">Documentation</a></p>
 
 
   <h1>Memory</h1>
@@ -443,7 +459,8 @@ int main(void) {
 
   <h1>Resources</h1>
     <h2>Documentation</h2>
-      <a href="https://en.cppreference.com/">Good documentation for standard libraries, both C/C++</a>
+      <div><a href="https://en.cppreference.com/">Good documentation for standard libraries, both C/C++</a></div>
+      <div><a href="https://gcc.gnu.org/onlinedocs/cpp/">Macro documentation</a></p></div>
 
 
   <h2>simple 'Hello, world!' example.c</h2>
