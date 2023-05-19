@@ -397,7 +397,7 @@ int32_t copiedData = *ptr;
     </p>
 
     <h3>References</h3>
-    <p>If you have defined an integer in your current stack frame and you want another function to modify its state, you can't give the int straight up to that function because would copy the value. If you had this int allocated on the heap, you could send the pointer to the function which it could use to fetch and modify the int. References are essentially reversing the address of where a value is stored giving you the pointer to that value.</p>
+    <p>If you have defined an integer in your current stack frame and you want another function to modify its state, you can't give the int straight up to that function because it would copy the value. If you had this int allocated on the heap, you could send the pointer to the function which it could use to fetch and modify the int. References are essentially reversing the address of where a value is stored giving you the pointer to that value.</p>
     <code class="multiline">#include &lt;stdio.h&gt;
 
 void doubleInt(int* value) {
