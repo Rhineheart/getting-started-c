@@ -211,6 +211,15 @@ int main(void) {
     <h3>char</h3>
       Chars are like integers but ALWAYS 1 byte long. This is always true, no matter the target architecture or compiler. Most useful characters used in the English language are encoded in what's called an ASCII table and can fit inside one byte of representation. This makes chars useful to represent development level strings.
 
+    <h3>basic strings (char*)</h3>
+      If you define a constant string in code using quotes, e.g.: "hello, world!" it's actually a static char array being defined and stored in your binary. I recommend reading a bit about pointers and arrays down below, but basic strings are stored in a char* chunk where the end of the string is a null byte.
+
+      <code class="multiline">char* content = "Hello, world!";
+printf("Content: %s\n", content); // prints: Content: Hello, world!
+
+content[5] = 0; 
+printf("Content: %s\n", content); // prints: Content: Hello</code>
+
     <h3>bool</h3>
       This is a type that was added in the C99 standard, it's more or less just an integer saying 0 or 1. If you want to use it you must include &lt;stdbool.h&gt;
 
